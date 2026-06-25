@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual env
+venv/
+.venv/
+env/
+
+# Models
+models/
+
+# Temp / output
+temp/
+output/
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Voice samples (user data)
+voices/*.wav
+voices/*.mp3
+voices/*.m4a
+voices/*.ogg
+!voices/Образец.wav
+!voices/Образец.mp3
+!voices/Образец.m4a
+!voices/Образец.ogg
