@@ -1,5 +1,7 @@
 # VoiceTransleter
 
+![VoiceTransleter](VoiceTransleter.jpg)
+
 Дубляж видео с переводом английской речи в русскую с синтезом голоса.
 
 **Разработчик:** Андраник Алавердян (AndranikFutureLabs)  
