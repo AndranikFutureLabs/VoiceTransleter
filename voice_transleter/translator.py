@@ -1,32 +1,43 @@
 from deep_translator import GoogleTranslator
-from config import TRANSLATE_SOURCE, TRANSLATE_TARGET
+from config import TRANSLATE_TARGET
+
+_WHISPER_TO_GOOGLE = {
+    "zh": "zh-CN",
+    "he": "iw",
+}
 
 
-_translator = None
+def _to_google_lang(code: str) -> str:
+    return _WHISPER_TO_GOOGLE.get(code, code)
 
 
-def _get_translator():
-    global _translator
-    if _translator is None:
-        _translator = GoogleTranslator(source=TRANSLATE_SOURCE, target=TRANSLATE_TARGET)
-    return _translator
+def translate_segments(segments: list[dict], source_lang: str, target_lang: str | None = None) -> list[dict]:
+    if target_lang is None:
+        target_lang = TRANSLATE_TARGET
 
+    src = _to_google_lang(source_lang)
+    tgt = _to_google_lang(target_lang)
 
-def translate_text(text: str) -> str:
-    if not text.strip():
-        return ""
-    t = _get_translator()
-    return t.translate(text)
+    if src == tgt:
+        result = []
+        for seg in segments:
+            result.append({
+                "start": seg["start"],
+                "end": seg["end"],
+                "text": seg["text"],
+                "translated": seg["text"],
+            })
+        return result
 
-
-def translate_segments(segments: list[dict]) -> list[dict]:
+    t = GoogleTranslator(source=src, target=tgt)
     result = []
     for seg in segments:
-        translated = translate_text(seg["text"])
+        text = seg["text"]
+        translated = t.translate(text) if text.strip() else ""
         result.append({
             "start": seg["start"],
             "end": seg["end"],
-            "text": seg["text"],
+            "text": text,
             "translated": translated,
         })
     return result

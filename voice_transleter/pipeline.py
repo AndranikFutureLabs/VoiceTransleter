@@ -1,7 +1,7 @@
 from pathlib import Path
 from transliterate import translit
 from .audio_extractor import extract_audio
-from .transcription import transcribe
+from .transcription import transcribe, LANG_NAMES
 from .translator import translate_segments
 from .tts import synthesize_segments
 from .video_renderer import merge_audio_segments, replace_audio_in_video
@@ -15,6 +15,13 @@ _EN_TO_RU_TRANSLIT = {
     'v': 'в', 'w': 'в', 'x': 'кс', 'y': 'й', 'z': 'з',
     'sh': 'ш', 'ch': 'ч', 'th': 'з', 'ph': 'ф', 'gh': 'г', 'ng': 'нг',
     'tion': 'шн', 'ight': 'айт', 'ea': 'иа', 'ou': 'ау', 'oo': 'у',
+}
+
+_OTHER_TO_RU = {
+    'a': 'а', 'b': 'б', 'c': 'к', 'd': 'д', 'e': 'э', 'f': 'ф', 'g': 'г',
+    'h': 'х', 'i': 'и', 'j': 'ж', 'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н',
+    'o': 'о', 'p': 'п', 'q': 'к', 'r': 'р', 's': 'с', 't': 'т', 'u': 'у',
+    'v': 'в', 'w': 'в', 'x': 'кс', 'y': 'й', 'z': 'з',
 }
 
 
@@ -37,6 +44,21 @@ def _transliterate_en(text: str) -> str:
     return ''.join(result)
 
 
+def _transliterate_other(text: str) -> str:
+    result = []
+    for c in text.lower():
+        result.append(_OTHER_TO_RU.get(c, c))
+    return ''.join(result)
+
+
+def _transliterate_source(text: str, source_lang: str) -> str:
+    if source_lang == "en":
+        return _transliterate_en(text)
+    if source_lang == "ru":
+        return translit(text, 'ru', reversed=True)
+    return _transliterate_other(text)
+
+
 def _format_timestamp(seconds: float) -> str:
     h = int(seconds // 3600)
     m = int((seconds % 3600) // 60)
@@ -45,13 +67,17 @@ def _format_timestamp(seconds: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
-def _save_text_files(segments: list[dict], video_path: Path):
+def _save_text_files(segments: list[dict], video_path: Path, source_lang: str):
     base = video_path.parent / video_path.stem
+    is_revoice = source_lang == "ru"
     entries = [
         ("_source.txt", "_source_plain.txt", lambda s: s['text']),
-        ("_translation.txt", "_translation_plain.txt", lambda s: s['translated']),
-        ("_source_translit.txt", "_source_translit_plain.txt", lambda s: _transliterate_en(s['text'])),
-        ("_translation_translit.txt", "_translation_translit_plain.txt", lambda s: translit(s['translated'], 'ru', reversed=True)),
+        ("_translation.txt", "_translation_plain.txt",
+         lambda s: s['text'] if is_revoice else s['translated']),
+        ("_source_translit.txt", "_source_translit_plain.txt",
+         lambda s: _transliterate_source(s['text'], source_lang)),
+        ("_translation_translit.txt", "_translation_translit_plain.txt",
+         lambda s: translit(s['translated'], 'ru', reversed=True)),
     ]
     for name_ts, name_plain, get_text in entries:
         lines_plain = []
@@ -67,7 +93,8 @@ def _save_text_files(segments: list[dict], video_path: Path):
 
 def dub_video(
     video_path: str | Path,
-    source_lang: str = "en",
+    source_lang: str = "auto",
+    target_lang: str = "ru",
     voice_id: str = "silero_xenia",
     output_path: str | Path | None = None,
     keep_temp: bool = False,
@@ -91,11 +118,18 @@ def dub_video(
     audio_path = extract_audio(video_path)
 
     log("[2/5] Transcribing audio...")
-    segments = transcribe(str(audio_path), language=source_lang)
-    log(f"       Found {len(segments)} segments")
+    segments, detected_lang = transcribe(str(audio_path), language=source_lang)
+    lang_label = LANG_NAMES.get(detected_lang, detected_lang.upper())
+    log(f"       Определён язык: {lang_label} ({detected_lang})")
+    log(f"       Найдено сегментов: {len(segments)}")
 
-    log("[3/5] Translating EN->RU...")
-    translated = translate_segments(segments)
+    is_revoice = detected_lang == target_lang
+    if is_revoice:
+        log(f"[3/5] Режим ревойса (язык уже {lang_label}, перевод не требуется)")
+        translated = translate_segments(segments, source_lang=detected_lang, target_lang=detected_lang)
+    else:
+        log(f"[3/5] Перевод {lang_label}->RU...")
+        translated = translate_segments(segments, source_lang=detected_lang, target_lang=target_lang)
 
     log(f"[4/5] Synthesizing speech (voice: {voice_profile['name']})...")
     tts_segments = synthesize_segments(translated, voice_profile)
@@ -105,7 +139,7 @@ def dub_video(
     result = replace_audio_in_video(video_path, merged_audio, output_path)
 
     log("Saving text files with timestamps...")
-    _save_text_files(translated, result)
+    _save_text_files(translated, result, detected_lang)
 
     if not keep_temp:
         import shutil

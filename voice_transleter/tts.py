@@ -1,4 +1,5 @@
 import os
+import re
 
 # Add bundled FFmpeg to PATH and DLL search path (torchcodec needs DLLs)
 _ffmpeg_bin = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin")
@@ -13,6 +14,10 @@ import numpy as np
 from pathlib import Path
 from silero import silero_tts
 from config import TEMP_DIR, TTS_SAMPLE_RATE
+
+
+def _normalize_dot_numbers(text: str) -> str:
+    return re.sub(r'(?<=\d)\.(?=\d)', ' ', text)
 
 
 _silero_model = None
@@ -118,6 +123,7 @@ def download_xtts(progress_callback=None):
 
 
 def synthesize_text(text: str, voice_profile: dict) -> torch.Tensor:
+    text = _normalize_dot_numbers(text)
     engine = voice_profile.get("engine", "silero")
 
     if engine == "silero":

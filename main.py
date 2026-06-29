@@ -50,6 +50,9 @@ def main(page: ft.Page):
         ),
         use_material3=True,
     )
+    def _make_link(text: str, url: str):
+        return ft.Text(spans=[ft.TextSpan(text, url=url)], size=13)
+
     def _show_about(_):
         dlg = ft.AlertDialog(
             title=ft.Text("О программе"),
@@ -57,12 +60,13 @@ def main(page: ft.Page):
                 ft.Text("VoiceTransleter — дубляж видео с переводом", size=14),
                 ft.Divider(),
                 ft.Text("Разработчик: Андраник Алавердян (AndranikFutureLabs)", size=13),
-                ft.Text("Поддержка: @AndranikFutureLabs", size=13),
-                ft.Text("Сайт: https://andranik-future-labs.ru", size=13),
-                ft.Text("GitHub: https://github.com/AndranikFutureLabs/VoiceTransleter", size=13),
+                _make_link("Поддержка: @AndranikFutureLabs", "https://t.me/AndranikFutureLabs"),
+                _make_link("Канал разработчика: @AndranikFutureLabsChannel", "https://t.me/AndranikFutureLabsChannel"),
+                _make_link("Сайт: https://andranik-future-labs.ru", "https://andranik-future-labs.ru"),
+                _make_link("GitHub: https://github.com/AndranikFutureLabs/VoiceTransleter", "https://github.com/AndranikFutureLabs/VoiceTransleter"),
                 ft.Divider(),
-                ft.Text("Версия 1.0", size=12, color=ft.Colors.GREY_400),
-            ], width=460, height=260, spacing=8),
+                ft.Text("Версия 1.1", size=12, color=ft.Colors.GREY_400),
+            ], width=480, height=300, spacing=8, scroll=ft.ScrollMode.AUTO),
             actions=[ft.TextButton("Закрыть", on_click=lambda _: page.pop_dialog())],
         )
         page.show_dialog(dlg)
