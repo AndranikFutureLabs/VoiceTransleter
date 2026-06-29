@@ -51,7 +51,7 @@ def main(page: ft.Page):
         use_material3=True,
     )
     def _make_link(text: str, url: str):
-        return ft.Text(spans=[ft.TextSpan(text, url=url)], size=13)
+        return ft.Text(spans=[ft.TextSpan(text, url=url, color=ft.Colors.BLUE_400)], size=13)
 
     def _show_about(_):
         dlg = ft.AlertDialog(
