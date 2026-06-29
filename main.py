@@ -50,8 +50,11 @@ def main(page: ft.Page):
         ),
         use_material3=True,
     )
-    def _make_link(text: str, url: str):
-        return ft.Text(spans=[ft.TextSpan(text, url=url)], size=13, color=ft.Colors.BLUE_400)
+    def _make_link(label: str, link_text: str, url: str):
+        return ft.Text(spans=[
+            ft.TextSpan(label),
+            ft.TextSpan(link_text, url=url, style=ft.TextStyle(color=ft.Colors.CYAN_400)),
+        ], size=13)
 
     def _show_about(_):
         dlg = ft.AlertDialog(
@@ -60,10 +63,10 @@ def main(page: ft.Page):
                 ft.Text("VoiceTransleter — дубляж видео с переводом", size=14),
                 ft.Divider(),
                 ft.Text("Разработчик: Андраник Алавердян (AndranikFutureLabs)", size=13),
-                _make_link("Поддержка: @AndranikFutureLabs", "https://t.me/AndranikFutureLabs"),
-                _make_link("Канал разработчика: @AndranikFutureLabsChannel", "https://t.me/AndranikFutureLabsChannel"),
-                _make_link("Сайт: https://andranik-future-labs.ru", "https://andranik-future-labs.ru"),
-                _make_link("GitHub: https://github.com/AndranikFutureLabs/VoiceTransleter", "https://github.com/AndranikFutureLabs/VoiceTransleter"),
+                _make_link("Поддержка: ", "@AndranikFutureLabs", "https://t.me/AndranikFutureLabs"),
+                _make_link("Канал разработчика: ", "@AndranikFutureLabsChannel", "https://t.me/AndranikFutureLabsChannel"),
+                _make_link("Сайт: ", "https://andranik-future-labs.ru", "https://andranik-future-labs.ru"),
+                _make_link("GitHub: ", "https://github.com/AndranikFutureLabs/VoiceTransleter", "https://github.com/AndranikFutureLabs/VoiceTransleter"),
                 ft.Divider(),
                 ft.Text("Версия 1.1", size=12, color=ft.Colors.GREY_400),
             ], width=480, height=300, spacing=8, scroll=ft.ScrollMode.AUTO),
